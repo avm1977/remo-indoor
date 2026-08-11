@@ -1,17 +1,14 @@
-<!-- REMO INDOOR — VERSION: 1.0.0 (2026-08-11) -->
+<!-- REMO INDOOR — VERSION: 1.1.0 (2026-08-11) -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Remo Indoor v1.0.0 — Dashboard de Entrenamiento</title>
+    <title>Remo Indoor v1.1.0 — Dashboard de Entrenamiento</title>
     <meta name="description" content="Panel de control para entrenamiento de remo indoor con telemetría Bluetooth en tiempo real">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Firebase Realtime Database SDK (Compat CDN) -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -1242,10 +1239,9 @@
     <header class="header">
         <div class="brand">
             <span class="brand-icon">🚣</span>
-            <h1>Remo Indoor <span class="app-version">v1.0.0</span></h1>
+            <h1>Remo Indoor <span class="app-version">v1.1.0</span></h1>
         </div>
         <div class="header-actions">
-            <button id="btn-cloud-sync" class="pill pill--cloud"><span>☁️ Sincronizar</span></button>
             <button id="btn-fullscreen" class="pill pill--fs">⛶ Pantalla Completa</button>
             <button id="btn-simulate" class="pill pill--sim">⚙️ Simular Datos</button>
             <button id="btn-bluetooth" class="pill pill--ble"><span>⚡ Conectar Remo</span></button>
@@ -1380,7 +1376,7 @@
     <!-- ─── HISTORY PANEL ─── -->
     <div class="collapse">
         <div class="collapse-trigger" id="history-trigger">
-            <span>📊 Historial de Entrenamientos</span>
+            <span>📊 Historial de Entrenamientos <span id="cloud-sync-indicator" class="app-version" style="font-size:11px; margin-left:10px; background:rgba(0,230,118,0.15); color:var(--green); border-color:rgba(0,230,118,0.4);">🟢 Sincronizado en la Nube</span></span>
             <span id="history-chevron">▼</span>
         </div>
         <div class="collapse-body" id="history-content">
@@ -1452,32 +1448,10 @@
                 <!-- Filas de etapas añadidas dinámicamente -->
             </div>
 
-            <div style="display:flex; gap:10px; margin-top:16px;">
-                <button type="submit" class="btn-primary" style="flex:2;">💾 Guardar Rutina</button>
-                <button type="button" onclick="resetDefaultWorkouts()" class="btn-secondary" style="flex:1; border-color:rgba(255,82,82,0.4); color:#ff5252;" title="Restablecer DÍA 1, 2 y 3 a valores de fábrica">↺ Restablecer Fábrica</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- ─── MODAL CLOUD SYNC KEY ─── -->
-<div id="modal-sync" class="modal-overlay">
-    <div class="modal-card">
-        <div class="modal-header">
-            <h2 class="modal-title">☁️ Sincronización en la Nube</h2>
-            <button class="modal-close" id="btn-close-sync">&times;</button>
-        </div>
-        <p style="color:#cbd5e1; margin-bottom:16px; font-size:14px; line-height:1.5;">
-            Introduce una <strong>Clave Personal</strong> para sincronizar tu historial y entrenamientos en tiempo real entre la Surface Pro 6, ordenador y móvil.
-        </p>
-        <form id="form-sync-key">
-            <div class="form-group">
-                <label class="form-label" for="sync-key-input">Tu Clave de Sincronización</label>
-                <input type="text" id="sync-key-input" class="form-input" placeholder="Ej: alberto-remo" required>
-            </div>
-            <div style="display:flex; gap:10px; margin-top:16px;">
-                <button type="submit" class="btn-primary" style="flex:2;">💾 Guardar y Sincronizar</button>
-                <button type="button" onclick="unlinkSyncKey()" class="btn-secondary" style="flex:1; border-color:rgba(255,82,82,0.4); color:#ff5252;">Desconectar</button>
+            <div style="display:flex; gap:8px; margin-top:16px; flex-wrap:wrap;">
+                <button type="submit" class="btn-primary" style="flex:2; min-width:140px;">💾 Guardar Rutina</button>
+                <button type="button" onclick="exportWorkoutsToClipboard()" class="btn-secondary" style="flex:1; min-width:120px;" title="Copiar código formateado para pegar directamente en index.html">📋 Exportar HTML</button>
+                <button type="button" onclick="resetDefaultWorkouts()" class="btn-secondary" style="flex:1; border-color:rgba(255,82,82,0.4); color:#ff5252; min-width:110px;" title="Restablecer DÍA 1, 2 y 3 a valores de fábrica">↺ Restablecer</button>
             </div>
         </form>
     </div>
@@ -1493,7 +1467,7 @@
         dia1: {
             name: "DÍA 1",
             stages: [
-                { duration: 5,  label: "Calentamiento suave", spm: "20", res: "Nivel 4", foot: "Libres" },
+                { duration: 5,  label: "Calentamiento suave", spm: "20", res: "Nivel 5", foot: "Libres" },
                 { duration: 15, label: "Bloque Principal (Piernas salvajes)", spm: "24-28", res: "Nivel 9-10", foot: "Sujetos" },
                 { duration: 5,  label: "Enfriamiento", spm: "18-20", res: "Nivel 4", foot: "Libres" }
             ]
@@ -1501,21 +1475,18 @@
         dia2: {
             name: "DÍA 2",
             stages: [
-                { duration: 5,  label: "Calentamiento suave", spm: "20", res: "Nivel 4", foot: "Libres" },
                 { duration: 10, label: "Trabajo Core / Pies Sueltos", spm: "28", res: "Nivel 6", foot: "Sueltos 👟" },
-                { duration: 15, label: "Potencia de Talón", spm: "30", res: "Nivel 8", foot: "Sujetos 🔒" },
-                { duration: 5,  label: "Enfriamiento", spm: "18-20", res: "Nivel 4", foot: "Libres" }
+                { duration: 15, label: "Potencia de Talón", spm: "30", res: "Nivel 8", foot: "Sujetos 🔒" }
             ]
         },
         dia3: {
             name: "DÍA 3",
             stages: [
-                { duration: 5,  label: "Calentamiento Suave", spm: "20", res: "Nivel 4", foot: "Libres" },
+                { duration: 5,  label: "Calentamiento Progresivo", spm: "20", res: "Nivel 5", foot: "Libres" },
                 { duration: 5,  label: "Ritmo Crucero", spm: "25", res: "Nivel 7", foot: "Sujetos" },
                 { duration: 5,  label: "Aceleración Sostenida", spm: "28", res: "Nivel 7", foot: "Sujetos" },
                 { duration: 5,  label: "Máxima Potencia Aeróbica", spm: "32", res: "Nivel 8", foot: "Sujetos" },
-                { duration: 5,  label: "¡Sprint Final (Velocidad Luz!)", spm: "35", res: "Nivel 6", foot: "Sujetos" },
-                { duration: 5,  label: "Enfriamiento", spm: "18-20", res: "Nivel 4", foot: "Libres" }
+                { duration: 5,  label: "¡Sprint Final (Velocidad Luz!)", spm: "35", res: "Nivel 6", foot: "Sujetos" }
             ]
         }
     };
@@ -1813,10 +1784,6 @@
     // ══════════════════════════════════════════════════════════
     function loadCustomWorkouts() {
         try {
-            const savedPredefined = JSON.parse(localStorage.getItem('remo_predefined_workouts') || 'null');
-            if (savedPredefined) {
-                Object.assign(ENTRENAMIENTOS, savedPredefined);
-            }
             const savedCustom = JSON.parse(localStorage.getItem('remo_custom_workouts') || '{}');
             Object.assign(ENTRENAMIENTOS, savedCustom);
         } catch (e) { console.warn("Error cargando rutinas:", e); }
@@ -2005,7 +1972,6 @@
 
         closeCustomWorkoutModal();
         selectWorkout(key);
-        pushWorkoutsToCloud();
     }
 
     function deleteCustomWorkout(key) {
@@ -2016,7 +1982,6 @@
             delete saved[key];
             localStorage.setItem('remo_custom_workouts', JSON.stringify(saved));
             if (currentDay === key) selectWorkout('dia1'); else renderTabs();
-            pushWorkoutsToCloud();
         }
     }
 
@@ -2029,160 +1994,27 @@
             renderTabs();
             if (['dia1', 'dia2', 'dia3'].includes(currentDay)) selectWorkout(currentDay);
             closeCustomWorkoutModal();
-            pushWorkoutsToCloud();
         }
     }
     window.resetDefaultWorkouts = resetDefaultWorkouts;
 
-    // ══════════════════════════════════════════════════════════
-    // CLOUD SYNC & FIREBASE REALTIME DATABASE MODULE
-    // ══════════════════════════════════════════════════════════
-    const FIREBASE_DB_URL = "https://remo-indoor-default-rtdb.firebaseio.com";
-    let firebaseDb = null;
-    let syncKey = localStorage.getItem('remo_sync_key') || '';
-    let isSubscribedToCloud = false;
-
-    function sanitizeKey(k) {
-        return (k || '').trim().toLowerCase().replace(/[^a-z0-9_-]/g, '_');
-    }
-
-    function initFirebaseCloud() {
-        if (typeof firebase === 'undefined') return;
-        try {
-            if (!firebase.apps.length) {
-                firebase.initializeApp({ databaseURL: FIREBASE_DB_URL });
-            }
-            firebaseDb = firebase.database();
-            updateCloudStatusBadge();
-            if (syncKey) {
-                syncWithCloudFirst(syncKey);
-            }
-        } catch (e) {
-            console.warn("Cloud Sync init warning:", e);
-        }
-    }
-
-    function updateCloudStatusBadge() {
-        if (!DOM.btnCloudSync) return;
-        const span = DOM.btnCloudSync.querySelector('span');
-        if (syncKey) {
-            DOM.btnCloudSync.classList.add('active-sync');
-            if (span) span.textContent = `🟢 ☁️ Clave: ${syncKey}`;
+    function exportWorkoutsToClipboard() {
+        const jsCode = `// ENTRENAMIENTOS GENERADOS DESDE EL EDITOR VISUAL\nconst DEFAULT_ENTRENAMIENTOS = ${JSON.stringify(ENTRENAMIENTOS, null, 4)};`;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(jsCode).then(() => {
+                alert('📋 ¡Código de rutinas copiado al portapapeles!\n\nPuedes pegarlo directamente en la sección <script> de tu index.html cuando quieras actualizar tu repositorio.');
+            }).catch(() => prompt('Copia este código y pégalo en tu index.html:', jsCode));
         } else {
-            DOM.btnCloudSync.classList.remove('active-sync');
-            if (span) span.textContent = `☁️ Sincronizar`;
+            prompt('Copia este código y pégalo en tu index.html:', jsCode);
         }
     }
-
-    function openSyncModal() {
-        if (DOM.syncKeyInput) DOM.syncKeyInput.value = syncKey;
-        if (DOM.modalSync) DOM.modalSync.classList.add('active');
-    }
-
-    function closeSyncModal() {
-        if (DOM.modalSync) DOM.modalSync.classList.remove('active');
-    }
-
-    function saveSyncKey(e) {
-        if (e) e.preventDefault();
-        const rawKey = DOM.syncKeyInput.value.trim();
-        if (!rawKey) return;
-
-        const cleanKey = sanitizeKey(rawKey);
-        syncKey = cleanKey;
-        isSubscribedToCloud = false;
-        localStorage.setItem('remo_sync_key', cleanKey);
-        updateCloudStatusBadge();
-        closeSyncModal();
-
-        if (firebaseDb) {
-            syncWithCloudFirst(cleanKey);
-        }
-    }
-
-    function unlinkSyncKey() {
-        if (confirm('¿Desconectar la clave de sincronización de este dispositivo?')) {
-            syncKey = '';
-            isSubscribedToCloud = false;
-            localStorage.removeItem('remo_sync_key');
-            updateCloudStatusBadge();
-            closeSyncModal();
-        }
-    }
-    window.unlinkSyncKey = unlinkSyncKey;
-
-    function syncWithCloudFirst(key) {
-        if (!firebaseDb || !key) return;
-        const userPath = 'users/' + sanitizeKey(key);
-
-        // 1. Leer entrenamientos guardados previamente en la nube
-        firebaseDb.ref(userPath + '/workouts').once('value').then(snapshot => {
-            const cloudWorkouts = snapshot.val();
-            if (cloudWorkouts && typeof cloudWorkouts === 'object' && Object.keys(cloudWorkouts).length > 0) {
-                Object.assign(ENTRENAMIENTOS, cloudWorkouts);
-                renderTabs();
-                selectWorkout(currentDay);
-            } else {
-                pushWorkoutsToCloud();
-            }
-        }).catch(err => console.warn("Error leyendo entrenamientos de nube:", err));
-
-        // 2. Leer historial guardado previamente en la nube
-        firebaseDb.ref(userPath + '/history').once('value').then(snapshot => {
-            const cloudHistory = snapshot.val();
-            if (Array.isArray(cloudHistory) && cloudHistory.length > 0) {
-                localStorage.setItem('remo_history', JSON.stringify(cloudHistory.slice(0, 25)));
-                renderHistory();
-            } else {
-                pushHistoryToCloud();
-            }
-        }).catch(err => console.warn("Error leyendo historial de nube:", err));
-
-        // 3. Conectar oyentes en tiempo real
-        attachCloudSyncListeners();
-    }
-
-    function attachCloudSyncListeners() {
-        if (!firebaseDb || !syncKey || isSubscribedToCloud) return;
-        isSubscribedToCloud = true;
-        const userPath = 'users/' + sanitizeKey(syncKey);
-
-        // Escuchar cambios en entrenamientos
-        firebaseDb.ref(userPath + '/workouts').on('value', snapshot => {
-            const cloudWorkouts = snapshot.val();
-            if (cloudWorkouts && typeof cloudWorkouts === 'object') {
-                Object.assign(ENTRENAMIENTOS, cloudWorkouts);
-                renderTabs();
-                selectWorkout(currentDay);
-            }
-        });
-
-        // Escuchar cambios en historial
-        firebaseDb.ref(userPath + '/history').on('value', snapshot => {
-            const cloudHistory = snapshot.val();
-            if (Array.isArray(cloudHistory)) {
-                localStorage.setItem('remo_history', JSON.stringify(cloudHistory.slice(0, 25)));
-                renderHistory();
-            }
-        });
-    }
-
-    function pushWorkoutsToCloud() {
-        if (!firebaseDb || !syncKey) return;
-        const userPath = 'users/' + sanitizeKey(syncKey);
-        firebaseDb.ref(userPath + '/workouts').set(ENTRENAMIENTOS);
-    }
-
-    function pushHistoryToCloud() {
-        if (!firebaseDb || !syncKey) return;
-        const history = JSON.parse(localStorage.getItem('remo_history') || '[]');
-        const userPath = 'users/' + sanitizeKey(syncKey);
-        firebaseDb.ref(userPath + '/history').set(history.slice(0, 25));
-    }
+    window.exportWorkoutsToClipboard = exportWorkoutsToClipboard;
 
     // ══════════════════════════════════════════════════════════
-    // HISTORY (localStorage) & EXPORT
+    // HISTORY & AUTO CLOUD DATABASE ENGINE
     // ══════════════════════════════════════════════════════════
+    const CLOUD_HISTORIAL_URL = 'https://jsonblob.com/api/jsonBlob/019ff03e-70cf-7ebe-80b0-2e5e9b3d9444';
+
     function saveSessionToHistory() {
         const totalSecs = activeStagesWithLimits.length ? (activeStagesWithLimits[0].limit + activeStagesWithLimits[0].duration * 60) : TOTAL_TIME;
         const elapsedSec = totalSecs - timeLeft;
@@ -2205,8 +2037,8 @@
 
         const workoutTitle = getWorkoutTitle(currentDay);
 
-        const history = JSON.parse(localStorage.getItem('remo_history') || '[]');
-        history.unshift({
+        const localHistory = JSON.parse(localStorage.getItem('remo_history') || '[]');
+        const newSession = {
             id: Date.now(),
             date: new Date().toLocaleDateString('es-ES'),
             time: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
@@ -2216,17 +2048,28 @@
             calories: rawCal,
             avgPower: avgP > 0 ? `${avgP} W` : '--',
             avgSpm: avgS > 0 ? `${avgS} SPM` : '--'
-        });
-        localStorage.setItem('remo_history', JSON.stringify(history.slice(0, 25)));
+        };
+
+        const updatedHistory = mergeHistoryArrays([newSession], localHistory);
+        localStorage.setItem('remo_history', JSON.stringify(updatedHistory.slice(0, 50)));
         renderHistory();
-        pushHistoryToCloud();
+
+        // Push automático a la nube sin intervención del usuario
+        pushAutoCloudHistory(updatedHistory.slice(0, 50));
     }
 
     function renderHistory() {
         if (!DOM.historyTableContainer) return;
         const history = JSON.parse(localStorage.getItem('remo_history') || '[]');
         if (!history.length) {
-            DOM.historyTableContainer.innerHTML = '<div style="text-align:center;color:var(--text-dim);padding:20px;">No hay sesiones registradas aún.</div>';
+            DOM.historyTableContainer.innerHTML = `
+                <div style="text-align:center;color:var(--text-dim);padding:20px 20px 10px;">No hay sesiones registradas aún en este navegador.</div>
+                <div style="text-align:center; margin-bottom:15px;">
+                    <label class="btn-secondary" style="cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
+                        📂 Cargar historial.json
+                        <input type="file" accept=".json" onchange="importHistorialFile(event)" style="display:none;">
+                    </label>
+                </div>`;
             return;
         }
         let html = `<table class="history-table"><thead><tr>
@@ -2245,9 +2088,13 @@
         html += `</tbody></table>
         <div class="history-actions-bar">
             <button onclick="clearHistory()" class="btn-danger">🗑️ Borrar Historial</button>
-            <div>
-                <button onclick="exportHistoryCSV()" class="btn-secondary">📥 Exportar CSV</button>
-                <button onclick="exportHistoryJSON()" class="btn-secondary" style="margin-left:6px;">📥 Exportar JSON</button>
+            <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                <button onclick="exportHistorialFile()" class="btn-secondary" title="Descargar historial.json para subir a tu repositorio de GitHub">📥 Descargar historial.json</button>
+                <label class="btn-secondary" style="cursor:pointer; display:inline-flex; align-items:center; gap:6px;" title="Importar un archivo historial.json existente">
+                    📂 Importar historial.json
+                    <input type="file" accept=".json" onchange="importHistorialFile(event)" style="display:none;">
+                </label>
+                <button onclick="exportHistoryCSV()" class="btn-secondary">📊 CSV</button>
             </div>
         </div>`;
         DOM.historyTableContainer.innerHTML = html;
@@ -2277,19 +2124,107 @@
     }
     window.exportHistoryCSV = exportHistoryCSV;
 
-    function exportHistoryJSON() {
+    function exportHistorialFile() {
         const history = JSON.parse(localStorage.getItem('remo_history') || '[]');
         if (!history.length) { alert("No hay historial para exportar."); return; }
 
-        const blob = new Blob([JSON.stringify(history, null, 2)], { type: 'application/json' });
+        const blob = new Blob([JSON.stringify(history, null, 4)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `remo_historial_${Date.now()}.json`;
+        a.download = `historial.json`;
         a.click();
         URL.revokeObjectURL(url);
     }
-    window.exportHistoryJSON = exportHistoryJSON;
+    window.exportHistorialFile = exportHistorialFile;
+
+    function importHistorialFile(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const imported = JSON.parse(e.target.result);
+                if (Array.isArray(imported)) {
+                    const localHistory = JSON.parse(localStorage.getItem('remo_history') || '[]');
+                    const combined = mergeHistoryArrays(imported, localHistory);
+                    localStorage.setItem('remo_history', JSON.stringify(combined.slice(0, 50)));
+                    renderHistory();
+                    alert(`¡Historial importado con éxito! (${imported.length} sesiones)`);
+                } else {
+                    alert('El archivo seleccionado no contiene una lista de historial válida.');
+                }
+            } catch (err) {
+                alert('Error al procesar el archivo historial.json.');
+            }
+        };
+        reader.readAsText(file);
+    }
+    window.importHistorialFile = importHistorialFile;
+
+    function loadAutoCloudHistory() {
+        fetch(CLOUD_HISTORIAL_URL, { cache: 'no-cache' })
+            .then(res => {
+                if (res.ok) return res.json();
+                throw new Error('Sin conexión al cloud');
+            })
+            .then(cloudHistory => {
+                if (Array.isArray(cloudHistory) && cloudHistory.length > 0) {
+                    const localHistory = JSON.parse(localStorage.getItem('remo_history') || '[]');
+                    const combined = mergeHistoryArrays(cloudHistory, localHistory);
+                    localStorage.setItem('remo_history', JSON.stringify(combined.slice(0, 50)));
+                    renderHistory();
+                    updateCloudBadgeUI(true);
+                }
+            })
+            .catch(() => {
+                loadRemoteHistorialFile();
+            });
+    }
+
+    function pushAutoCloudHistory(historyData) {
+        fetch(CLOUD_HISTORIAL_URL, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(historyData)
+        })
+        .then(res => {
+            if (res.ok) updateCloudBadgeUI(true);
+        })
+        .catch(err => console.warn("Auto cloud sync save error:", err));
+    }
+
+    function updateCloudBadgeUI(active) {
+        const badge = document.getElementById('cloud-sync-indicator');
+        if (badge) {
+            badge.style.display = active ? 'inline-block' : 'none';
+        }
+    }
+
+    function loadRemoteHistorialFile() {
+        fetch('./historial.json', { cache: 'no-cache' })
+            .then(res => {
+                if (res.ok) return res.json();
+                throw new Error('Sin historial.json remoto');
+            })
+            .then(remoteHistory => {
+                if (Array.isArray(remoteHistory) && remoteHistory.length > 0) {
+                    const localHistory = JSON.parse(localStorage.getItem('remo_history') || '[]');
+                    const combined = mergeHistoryArrays(remoteHistory, localHistory);
+                    localStorage.setItem('remo_history', JSON.stringify(combined.slice(0, 50)));
+                    renderHistory();
+                }
+            })
+            .catch(() => {});
+    }
+
+    function mergeHistoryArrays(arr1, arr2) {
+        const map = new Map();
+        [...(arr1 || []), ...(arr2 || [])].forEach(item => {
+            if (item && item.id) map.set(item.id, item);
+        });
+        return Array.from(map.values()).sort((a, b) => b.id - a.id);
+    }
 
     // ══════════════════════════════════════════════════════════
     // BLUETOOTH (Web BLE — FTMS)
@@ -2672,10 +2607,6 @@
     DOM.btnAddStageRow.addEventListener('click', () => addStageRow());
     DOM.formCustomWorkout.addEventListener('submit', saveCustomWorkout);
 
-    if (DOM.btnCloudSync) DOM.btnCloudSync.addEventListener('click', openSyncModal);
-    if (DOM.btnCloseSync) DOM.btnCloseSync.addEventListener('click', closeSyncModal);
-    if (DOM.formSyncKey) DOM.formSyncKey.addEventListener('submit', saveSyncKey);
-
     DOM.btnBluetooth.addEventListener('click', () => {
         if (!bleDevice) connectBluetooth(); else bleDevice.gatt.disconnect();
     });
@@ -2707,8 +2638,8 @@
         loadCustomWorkouts();
         selectWorkout('dia1');
         renderHistory();
+        loadAutoCloudHistory();
         initTouchGestures();
-        initFirebaseCloud();
 
         if (!('wakeLock' in navigator)) {
             DOM.btnWakeLock.style.opacity = '0.4';
