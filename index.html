@@ -1030,15 +1030,49 @@
             margin-bottom: 10px;
             position: relative;
         }
-        .btn-remove-stage {
+        .stage-row-actions {
             position: absolute;
             top: 8px;
             right: 8px;
-            background: transparent;
-            border: none;
-            color: var(--red);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .btn-move-stage {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--cyan);
+            border-radius: 6px;
+            width: 28px;
+            height: 28px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 11px;
+            transition: all 0.2s;
+        }
+        .btn-move-stage:hover {
+            background: rgba(0, 240, 255, 0.2);
+            border-color: var(--cyan);
+        }
+        .btn-remove-stage {
+            background: rgba(255, 23, 68, 0.1);
+            border: 1px solid rgba(255, 23, 68, 0.3);
+            color: #ff1744;
+            border-radius: 6px;
+            width: 28px;
+            height: 28px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             cursor: pointer;
             font-size: 16px;
+            transition: all 0.2s;
+        }
+        .btn-remove-stage:hover {
+            background: rgba(255, 23, 68, 0.25);
+            border-color: #ff1744;
         }
 
         .btn-primary {
@@ -1864,8 +1898,12 @@
         const div = document.createElement('div');
         div.className = 'stage-row-item';
         div.innerHTML = `
-            <button type="button" class="btn-remove-stage">&times;</button>
-            <div style="display:grid; grid-template-columns: 2fr 1fr; gap:8px; margin-bottom:8px;">
+            <div class="stage-row-actions">
+                <button type="button" class="btn-move-stage btn-move-up" title="Mover etapa arriba">▲</button>
+                <button type="button" class="btn-move-stage btn-move-down" title="Mover etapa abajo">▼</button>
+                <button type="button" class="btn-remove-stage" title="Eliminar etapa">&times;</button>
+            </div>
+            <div style="display:grid; grid-template-columns: 2fr 1fr; gap:8px; margin-bottom:8px; padding-right:90px;">
                 <div>
                     <label class="form-label">Nombre Etapa</label>
                     <input type="text" class="form-input stage-label" value="${label}" placeholder="Ej: Calentamiento" required>
@@ -1894,6 +1932,21 @@
                 </div>
             </div>
         `;
+
+        div.querySelector('.btn-move-up').addEventListener('click', () => {
+            if (div.previousElementSibling) {
+                div.parentNode.insertBefore(div, div.previousElementSibling);
+                playTapSound();
+            }
+        });
+
+        div.querySelector('.btn-move-down').addEventListener('click', () => {
+            if (div.nextElementSibling) {
+                div.parentNode.insertBefore(div.nextElementSibling, div);
+                playTapSound();
+            }
+        });
+
         div.querySelector('.btn-remove-stage').addEventListener('click', () => div.remove());
         DOM.customStagesContainer.appendChild(div);
     }
