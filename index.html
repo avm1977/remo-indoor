@@ -1,10 +1,11 @@
-<!-- REMO INDOOR — VERSION: 1.1.1 (2026-08-11) -->
+<!-- REMO INDOOR — VERSION: 1.1.0 (2026-08-11) -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Remo Indoor v1.1.1 — Dashboard de Entrenamiento</title>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https://jsonblob.com https:; font-src 'self' https://fonts.gstatic.com https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;">
+    <title>Remo Indoor v1.1.0 — Dashboard de Entrenamiento</title>
     <meta name="description" content="Panel de control para entrenamiento de remo indoor con telemetría Bluetooth en tiempo real">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1239,7 +1240,7 @@
     <header class="header">
         <div class="brand">
             <span class="brand-icon">🚣</span>
-            <h1>Remo Indoor <span class="app-version">v1.1.1</span></h1>
+            <h1>Remo Indoor <span class="app-version">v1.1.0</span></h1>
         </div>
         <div class="header-actions">
             <button id="btn-fullscreen" class="pill pill--fs">⛶ Pantalla Completa</button>
@@ -1459,6 +1460,19 @@
 
 <script>
     // ══════════════════════════════════════════════════════════
+    // SEGURIDAD Y DESINFECCIÓN HTML (Anti-XSS Sanitizer)
+    // ══════════════════════════════════════════════════════════
+    function escapeHtml(str) {
+        if (str === null || str === undefined) return '';
+        return String(str)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // ══════════════════════════════════════════════════════════
     // CONFIGURACIÓN Y DATOS DE ENTRENAMIENTO
     // ══════════════════════════════════════════════════════════
     const TOTAL_TIME = 25 * 60;
@@ -1467,29 +1481,26 @@
         dia1: {
             name: "DÍA 1",
             stages: [
-                { duration: 5,  label: "Calentamiento suave", spm: "20", res: "Nivel 4", foot: "Libres" },
-                { duration: 25, label: "Bloque Principal (Piernas salvajes)", spm: "24-28", res: "Nivel 9-10", foot: "Sujetos" },
+                { duration: 5,  label: "Calentamiento suave", spm: "20", res: "Nivel 5", foot: "Libres" },
+                { duration: 15, label: "Bloque Principal (Piernas salvajes)", spm: "24-28", res: "Nivel 9-10", foot: "Sujetos" },
                 { duration: 5,  label: "Enfriamiento", spm: "18-20", res: "Nivel 4", foot: "Libres" }
             ]
         },
         dia2: {
             name: "DÍA 2",
             stages: [
-                { duration: 5,  label: "Calentamiento suave", spm: "20", res: "Nivel 4", foot: "Libres" },
                 { duration: 10, label: "Trabajo Core / Pies Sueltos", spm: "28", res: "Nivel 6", foot: "Sueltos 👟" },
-                { duration: 15, label: "Potencia de Talón", spm: "30", res: "Nivel 8", foot: "Sujetos 🔒" },
-                { duration: 5,  label: "Enfriamiento", spm: "18-20", res: "Nivel 4", foot: "Libres" }
+                { duration: 15, label: "Potencia de Talón", spm: "30", res: "Nivel 8", foot: "Sujetos 🔒" }
             ]
         },
         dia3: {
             name: "DÍA 3",
             stages: [
-                { duration: 5,  label: "Calentamiento Suave", spm: "20", res: "Nivel 4", foot: "Libres" },
+                { duration: 5,  label: "Calentamiento Progresivo", spm: "20", res: "Nivel 5", foot: "Libres" },
                 { duration: 5,  label: "Ritmo Crucero", spm: "25", res: "Nivel 7", foot: "Sujetos" },
                 { duration: 5,  label: "Aceleración Sostenida", spm: "28", res: "Nivel 7", foot: "Sujetos" },
                 { duration: 5,  label: "Máxima Potencia Aeróbica", spm: "32", res: "Nivel 8", foot: "Sujetos" },
-                { duration: 5,  label: "¡Sprint Final (Velocidad Luz!)", spm: "35", res: "Nivel 6", foot: "Sujetos" },
-                { duration: 5,  label: "Enfriamiento", spm: "18-20", res: "Nivel 4", foot: "Libres" }
+                { duration: 5,  label: "¡Sprint Final (Velocidad Luz!)", spm: "35", res: "Nivel 6", foot: "Sujetos" }
             ]
         }
     };
@@ -2080,12 +2091,12 @@
         </tr></thead><tbody>`;
         history.forEach(r => {
             html += `<tr>
-                <td>📅 ${r.date}</td><td>⏱️ ${r.time}</td>
-                <td style="color:var(--cyan);font-weight:700">${r.day}</td>
-                <td style="color:var(--text-main);font-weight:600">${r.duration || '--:--'}</td>
-                <td>${r.distance}</td><td>${r.calories}</td>
-                <td style="color:var(--cyan);font-weight:600">${r.avgPower}</td>
-                <td style="color:var(--purple);font-weight:600">${r.avgSpm}</td>
+                <td>📅 ${escapeHtml(r.date)}</td><td>⏱️ ${escapeHtml(r.time)}</td>
+                <td style="color:var(--cyan);font-weight:700">${escapeHtml(r.day)}</td>
+                <td style="color:var(--text-main);font-weight:600">${escapeHtml(r.duration || '--:--')}</td>
+                <td>${escapeHtml(r.distance)}</td><td>${escapeHtml(r.calories)}</td>
+                <td style="color:var(--cyan);font-weight:600">${escapeHtml(r.avgPower)}</td>
+                <td style="color:var(--purple);font-weight:600">${escapeHtml(r.avgSpm)}</td>
             </tr>`;
         });
         html += `</tbody></table>
@@ -2394,7 +2405,7 @@
             const start = i === 0 ? totalSecs : activeStagesWithLimits[i-1].limit;
             const el = document.createElement('div');
             el.className = 'timeline-item';
-            el.innerHTML = `<span>⏱ ${formatTime(start)} – ${formatTime(s.limit)} │ ${s.label}</span><span>${s.spm} SPM / ${s.res}</span>`;
+            el.innerHTML = `<span>⏱ ${formatTime(start)} – ${formatTime(s.limit)} │ ${escapeHtml(s.label)}</span><span>${escapeHtml(s.spm)} SPM / ${escapeHtml(s.res)}</span>`;
             DOM.guideContainer.appendChild(el);
         });
         updateStageMetrics(true);
