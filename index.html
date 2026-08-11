@@ -2036,7 +2036,7 @@
             firebaseDb = firebase.database();
             updateCloudStatusBadge();
             if (syncKey) {
-                attachCloudSyncListeners();
+                syncWithCloudFirst(syncKey);
             }
         } catch (e) {
             console.warn("Cloud Sync init warning:", e);
@@ -2071,26 +2071,57 @@
 
         const cleanKey = sanitizeKey(rawKey);
         syncKey = cleanKey;
+        isSubscribedToCloud = false;
         localStorage.setItem('remo_sync_key', cleanKey);
         updateCloudStatusBadge();
         closeSyncModal();
 
         if (firebaseDb) {
-            attachCloudSyncListeners();
-            pushWorkoutsToCloud();
-            pushHistoryToCloud();
+            syncWithCloudFirst(cleanKey);
         }
     }
 
     function unlinkSyncKey() {
         if (confirm('¿Desconectar la clave de sincronización de este dispositivo?')) {
             syncKey = '';
+            isSubscribedToCloud = false;
             localStorage.removeItem('remo_sync_key');
             updateCloudStatusBadge();
             closeSyncModal();
         }
     }
     window.unlinkSyncKey = unlinkSyncKey;
+
+    function syncWithCloudFirst(key) {
+        if (!firebaseDb || !key) return;
+        const userPath = 'users/' + sanitizeKey(key);
+
+        // 1. Leer entrenamientos guardados previamente en la nube
+        firebaseDb.ref(userPath + '/workouts').once('value').then(snapshot => {
+            const cloudWorkouts = snapshot.val();
+            if (cloudWorkouts && typeof cloudWorkouts === 'object' && Object.keys(cloudWorkouts).length > 0) {
+                Object.assign(ENTRENAMIENTOS, cloudWorkouts);
+                renderTabs();
+                selectWorkout(currentDay);
+            } else {
+                pushWorkoutsToCloud();
+            }
+        }).catch(err => console.warn("Error leyendo entrenamientos de nube:", err));
+
+        // 2. Leer historial guardado previamente en la nube
+        firebaseDb.ref(userPath + '/history').once('value').then(snapshot => {
+            const cloudHistory = snapshot.val();
+            if (Array.isArray(cloudHistory) && cloudHistory.length > 0) {
+                localStorage.setItem('remo_history', JSON.stringify(cloudHistory.slice(0, 25)));
+                renderHistory();
+            } else {
+                pushHistoryToCloud();
+            }
+        }).catch(err => console.warn("Error leyendo historial de nube:", err));
+
+        // 3. Conectar oyentes en tiempo real
+        attachCloudSyncListeners();
+    }
 
     function attachCloudSyncListeners() {
         if (!firebaseDb || !syncKey || isSubscribedToCloud) return;
@@ -2103,7 +2134,7 @@
             if (cloudWorkouts && typeof cloudWorkouts === 'object') {
                 Object.assign(ENTRENAMIENTOS, cloudWorkouts);
                 renderTabs();
-                updateGuideList();
+                selectWorkout(currentDay);
             }
         });
 
