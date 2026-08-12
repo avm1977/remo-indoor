@@ -1986,6 +1986,7 @@
 
         closeCustomWorkoutModal();
         selectWorkout(key);
+        pushAutoCloudFullData();
     }
 
     function deleteCustomWorkout(key) {
@@ -1996,6 +1997,7 @@
             delete saved[key];
             localStorage.setItem('remo_custom_workouts', JSON.stringify(saved));
             if (currentDay === key) selectWorkout('dia1'); else renderTabs();
+            pushAutoCloudFullData();
         }
     }
 
@@ -2008,6 +2010,7 @@
             renderTabs();
             if (['dia1', 'dia2', 'dia3'].includes(currentDay)) selectWorkout(currentDay);
             closeCustomWorkoutModal();
+            pushAutoCloudFullData();
         }
     }
     window.resetDefaultWorkouts = resetDefaultWorkouts;
@@ -2068,8 +2071,8 @@
         localStorage.setItem('remo_history', JSON.stringify(updatedHistory.slice(0, 50)));
         renderHistory();
 
-        // Push automático a la nube sin intervención del usuario
-        pushAutoCloudHistory(updatedHistory.slice(0, 50));
+        // Push automático a la nube sin intervención del usuario (Historial + Planes)
+        pushAutoCloudFullData();
     }
 
     function renderHistory() {
@@ -2182,12 +2185,25 @@
                 if (res.ok) return res.json();
                 throw new Error('Sin conexión al cloud');
             })
-            .then(cloudHistory => {
-                if (Array.isArray(cloudHistory) && cloudHistory.length > 0) {
-                    const localHistory = JSON.parse(localStorage.getItem('remo_history') || '[]');
-                    const combined = mergeHistoryArrays(cloudHistory, localHistory);
-                    localStorage.setItem('remo_history', JSON.stringify(combined.slice(0, 50)));
-                    renderHistory();
+            .then(cloudData => {
+                if (cloudData) {
+                    // 1. Cargar e integrar historial de la nube
+                    const cloudHistory = Array.isArray(cloudData) ? cloudData : cloudData.historial;
+                    if (Array.isArray(cloudHistory) && cloudHistory.length > 0) {
+                        const localHistory = JSON.parse(localStorage.getItem('remo_history') || '[]');
+                        const combined = mergeHistoryArrays(cloudHistory, localHistory);
+                        localStorage.setItem('remo_history', JSON.stringify(combined.slice(0, 50)));
+                        renderHistory();
+                    }
+
+                    // 2. Cargar e integrar planes de entrenamiento de la nube
+                    const cloudWorkouts = cloudData.entrenamientos;
+                    if (cloudWorkouts && typeof cloudWorkouts === 'object' && Object.keys(cloudWorkouts).length > 0) {
+                        Object.assign(ENTRENAMIENTOS, cloudWorkouts);
+                        renderTabs();
+                        selectWorkout(currentDay);
+                    }
+
                     updateCloudBadgeUI(true);
                 }
             })
@@ -2196,11 +2212,17 @@
             });
     }
 
-    function pushAutoCloudHistory(historyData) {
+    function pushAutoCloudFullData() {
+        const history = JSON.parse(localStorage.getItem('remo_history') || '[]');
+        const payload = {
+            historial: history.slice(0, 50),
+            entrenamientos: ENTRENAMIENTOS
+        };
+
         fetch(CLOUD_HISTORIAL_URL, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(historyData)
+            body: JSON.stringify(payload)
         })
         .then(res => {
             if (res.ok) updateCloudBadgeUI(true);
